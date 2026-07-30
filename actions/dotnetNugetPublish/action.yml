@@ -19,6 +19,9 @@ runs:
         dotnet-version: ${{ inputs.dotnetVersion }}
 
     - name: Pack
+      env:
+        GH_PACKAGE_USERNAME: ${{ secrets.GH_PACKAGE_USERNAME }}
+        GH_PACKAGE_TOKEN: ${{ secrets.GH_PACKAGE_TOKEN }}
       shell: bash
       run: dotnet pack "${{ inputs.startupProject }}"  -c Release -o ./nupkg
 
