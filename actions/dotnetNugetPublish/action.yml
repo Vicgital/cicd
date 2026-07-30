@@ -8,12 +8,6 @@ inputs:
   githubPublishPackageToken:
     description: 'Github authentication token used to push the package, tipically the {{ secrets.GITHUB_TOKEN }}'
     required: true
-  githubPackageUsername:
-    description: 'The Github auth username used to retore dependency packages'
-    required: true
-  githubPackageToken:
-    description: 'The Github auth PAT used to retore dependency packages'
-    required: true
   dotnetVersion:
     description: '.NET SDK version to use'
     required: false
@@ -43,9 +37,6 @@ runs:
         dotnet-version: ${{ inputs.dotnetVersion }}
 
     - name: Run Dotnet Pack
-      env:
-        GH_PACKAGE_USERNAME: ${{ inputs.githubPackageUsername }}
-        GH_PACKAGE_TOKEN: ${{ inputs.githubPackageToken }}
       shell: bash
       run: dotnet pack "${{ inputs.startupProject }}"  -c Release -o ./nupkg
 

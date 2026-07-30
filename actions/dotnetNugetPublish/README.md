@@ -22,8 +22,6 @@ jobs:
         with:
           startupProject: src/Vicgital.Core.Logging/Vicgital.Core.Logging.csproj
           githubPublishPackageToken: ${{ secrets.GITHUB_TOKEN }}
-          githubPackageUsername: ${{ secrets.GH_PACKAGE_USERNAME }}
-          githubPackageToken: ${{ secrets.GH_PACKAGE_TOKEN }}
 ```
 
 ## Inputs
@@ -32,8 +30,6 @@ jobs:
 |---|---|---|---|
 | `startupProject` | yes | - | Path to the `.csproj` file to pack |
 | `githubPublishPackageToken` | yes | - | GitHub authentication token used to push the package, typically `secrets.GITHUB_TOKEN` |
-| `githubPackageUsername` | yes | - | GitHub auth username used to restore dependency packages |
-| `githubPackageToken` | yes | - | GitHub auth PAT used to restore dependency packages |
 | `dotnetVersion` | no | `10.0.x` | .NET SDK version to use |
 | `skipCheckout` | no | `false` | Skip the checkout step, e.g. if the code is already checked out at the workflow level or in a previous job |
 | `fetchDepth` | no | `1` | Number of commits to fetch (only used if the checkout step isn't skipped) |
@@ -52,8 +48,7 @@ jobs:
 ## Notes
 
 - Secrets aren't implicitly available to composite actions, so the calling workflow must pass
-  them in explicitly as inputs (`githubPublishPackageToken`, `githubPackageUsername`,
-  `githubPackageToken`).
+  them in explicitly as inputs (`githubPublishPackageToken`).
 - The calling workflow's job needs `permissions: packages: write` for the push step to succeed.
 - The NuGet feed URL is hardcoded to the Vicgital GitHub Packages org and isn't configurable
   as an input.
