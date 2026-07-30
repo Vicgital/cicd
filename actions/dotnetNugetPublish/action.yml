@@ -16,6 +16,10 @@ inputs:
     description: 'Skip checkout step (set to "true" if the code is already available in the runner, e.g., cloned at workflow level or from a previous job)'
     required: false
     default: 'false'
+  skipDotNetSetup:
+    description: 'Skip .NET Setup step (set to "true" if the .NET is already setup is already available in the runner, e.g., cloned at workflow level or from a previous job)'
+    required: false
+    default: 'false'
   fetchDepth:
     description: 'Number of commits to fetch (used if checkout is not skipped)'
     required: false
@@ -32,6 +36,7 @@ runs:
         fetch-depth: ${{ inputs.fetchDepth }}
 
     - name: Setup .NET
+      if: inputs.skipDotNetSetup != 'true'
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ inputs.dotnetVersion }}
