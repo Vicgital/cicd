@@ -1,8 +1,8 @@
 name: 'Docker Build and Publish'
 description: 'Build and publish Docker image'
 inputs:
-  startupProject: 
-    description: 'Project path that has the Dockerfile'
+  dockerFilePath: 
+    description: 'The dockerfile path '
     required: true
   githubPublishImageToken:
     description: 'Github authentication token used to push the docker image, tipically the {{ secrets.GITHUB_TOKEN }}'
@@ -65,7 +65,7 @@ runs:
       run: |
           echo "artifact_path=build" >> $GITHUB_OUTPUT
           echo "docker_context=." >> $GITHUB_OUTPUT
-          echo "dockerfile=${{ inputs.startupProject }}/Dockerfile" >> $GITHUB_OUTPUT
+          echo "dockerfile=${{ inputs.dockerFilePath }}" >> $GITHUB_OUTPUT
           echo "build_args=--build-arg source=build" >> $GITHUB_OUTPUT
 
     - name: Set up Docker Buildx
@@ -111,6 +111,4 @@ runs:
         docker push $IMAGE:$TAG
         echo "TAG=$TAG" >> $GITHUB_ENV
         echo "docker_image_tag=$TAG" >> $GITHUB_OUTPUT
-        echo "${{ github.ref_name }}"
-
-        docker logout ghcr.io      
+        echo "${{ github.ref_name }}"        
