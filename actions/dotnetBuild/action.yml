@@ -102,3 +102,5 @@ runs:
       with:
         name: ${{ inputs.artifactId }}
         path: build
+        retention-days: 1
+        
