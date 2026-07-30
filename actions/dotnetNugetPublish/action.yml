@@ -18,16 +18,31 @@ inputs:
     description: '.NET SDK version to use'
     required: false
     default: '10.0.x'
+  skipCheckout:
+    description: 'Skip checkout step (set to "true" if the code is already available in the runner, e.g., cloned at workflow level or from a previous job)'
+    required: false
+    default: 'false'
+  fetchDepth:
+    description: 'Number of commits to fetch (used if checkout is not skipped)'
+    required: false
+    default: '1'
 
 runs:
-  using: 'composite'
+  using: composite
   steps:
+
+    - name: Checkout caller repository
+      if: inputs.skipCheckout != 'true'
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: ${{ inputs.fetchDepth }}
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ inputs.dotnetVersion }}
 
-    - name: Pack
+    - name: Run Dotnet Pack
       env:
         GH_PACKAGE_USERNAME: ${{ inputs.githubPackageUsername }}
         GH_PACKAGE_TOKEN: ${{ inputs.githubPackageToken }}

@@ -18,8 +18,6 @@ jobs:
       packages: write
       contents: read
     steps:
-      - uses: actions/checkout@v4
-
       - uses: Vicgital/cicd/actions/dotnetNugetPublish@main
         with:
           startupProject: src/Vicgital.Core.Logging/Vicgital.Core.Logging.csproj
@@ -37,14 +35,18 @@ jobs:
 | `githubPackageUsername` | yes | - | GitHub auth username used to restore dependency packages |
 | `githubPackageToken` | yes | - | GitHub auth PAT used to restore dependency packages |
 | `dotnetVersion` | no | `10.0.x` | .NET SDK version to use |
+| `skipCheckout` | no | `false` | Skip the checkout step, e.g. if the code is already checked out at the workflow level or in a previous job |
+| `fetchDepth` | no | `1` | Number of commits to fetch (only used if the checkout step isn't skipped) |
 
 ## What it does
 
-1. Sets up the .NET SDK (`actions/setup-dotnet@v4`) using `dotnetVersion`.
-2. Runs `dotnet pack` on `startupProject` in `Release` configuration, output to `./nupkg`, using
+1. Checks out the caller repository (`actions/checkout@v4`) using `fetchDepth`, unless
+   `skipCheckout` is `true`.
+2. Sets up the .NET SDK (`actions/setup-dotnet@v4`) using `dotnetVersion`.
+3. Runs `dotnet pack` on `startupProject` in `Release` configuration, output to `./nupkg`, using
    `githubPackageUsername`/`githubPackageToken` (as `GH_PACKAGE_USERNAME`/`GH_PACKAGE_TOKEN`) to
    restore any dependencies from GitHub Packages.
-3. Pushes the resulting `.nupkg` to `https://nuget.pkg.github.com/vicgital/index.json` via
+4. Pushes the resulting `.nupkg` to `https://nuget.pkg.github.com/vicgital/index.json` via
    `dotnet nuget push`, authenticating with `githubPublishPackageToken` and skipping duplicates.
 
 ## Notes
