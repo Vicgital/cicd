@@ -2,10 +2,6 @@
 
 Packs a .NET project and publishes it to the Vicgital GitHub Packages NuGet feed.
 
-Extracted from the near-identical `publish_package.yml` workflow duplicated across the Vicgital
-.NET repos (`Vicgital.Application.Shared`, `Vicgital.Calendar.Service`, `Vicgital.Core.Configuration`,
-`Vicgital.Core.Logging`, `Vicgital.Data.Sql`, `Vicgital.Grpc`).
-
 ## Usage
 
 ```yaml
@@ -24,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: Vicgital/vicgital-custom-actions/actions/dotnetNugetPublish@main
+      - uses: Vicgital/cicd/actions/dotnetNugetPublish@main
         with:
           startupProject: src/Vicgital.Core.Logging/Vicgital.Core.Logging.csproj
 ```
