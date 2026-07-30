@@ -1,0 +1,99 @@
+name: 'DotNET Build'
+description: 'Builds a .NET Project'
+
+inputs:
+  startupProject: 
+    description: 'Project path'
+    required: true
+  artifactId:
+    description: 'Artifact name with dist folder published'
+    required: true
+  dotnetVersion:
+    description: 'Dotnet SDK version to use'
+    required: false
+    default: '10.0.x'
+  skipCheckout:
+    description: 'Skip checkout step (set to "true" if the code is already available in the runner, e.g., cloned at workflow level or from a previous job)'
+    required: false
+    default: 'false'
+  fetchDepth:
+    description: 'Number of commits to fetch (used if checkout is not skipped)'
+    required: false
+    default: '1'
+
+runs:
+  using: composite  
+  steps:
+
+    - name: Checkout caller repository
+      if: inputs.skipCheckout != 'true'
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: ${{ inputs.fetchDepth }}
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ inputs.dotnetVersion }}
+
+    - name: Configure NuGet (offline preference + quiet + user-owned tools path)
+      shell: bash
+      run: |
+        # Point NuGet global-packages / http-cache at fixed, cache-friendly locations
+        mkdir -p "$HOME/.nuget/packages" "$HOME/.local/share/NuGet/http-cache" "$HOME/.dotnet/tools"
+        echo "NUGET_PACKAGES=$HOME/.nuget/packages"                >> "$GITHUB_ENV"
+        echo "NUGET_HTTP_CACHE_PATH=$HOME/.local/share/NuGet/http-cache" >> "$GITHUB_ENV"
+        echo "NUGET_XMLDOC_MODE=skip"                              >> "$GITHUB_ENV"
+        echo "DOTNET_NOLOGO=1"                                     >> "$GITHUB_ENV"
+        echo "DOTNET_CLI_TELEMETRY_OPTOUT=1"                       >> "$GITHUB_ENV"
+        echo "DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1"                 >> "$GITHUB_ENV"
+        echo "NUGET_HTTP_USER_AGENT=GitHubActions-${{ github.repository }}-${{ github.run_id }}" >> "$GITHUB_ENV"
+        echo "$HOME/.dotnet/tools"                                 >> "$GITHUB_PATH"
+
+    - name: Cache NuGet packages (~/.nuget/packages)
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-dotnet${{ inputs.dotnetVersion }}-${{ hashFiles('**/*.csproj', '**/*.sln', '**/Directory.Packages.props', '**/Directory.Build.props', '**/packages.lock.json', '**/nuget.config', '**/NuGet.Config') }}
+        restore-keys: |
+          nuget-${{ runner.os }}-dotnet${{ inputs.dotnetVersion }}-
+          nuget-${{ runner.os }}-
+
+    - name: Cache NuGet HTTP cache (~/.local/share/NuGet/http-cache)
+      uses: actions/cache@v4
+      with:
+        path: ~/.local/share/NuGet/http-cache
+        key: nuget-http-${{ runner.os }}-dotnet${{ inputs.dotnetVersion }}-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props', '**/packages.lock.json') }}
+        restore-keys: |
+          nuget-http-${{ runner.os }}-dotnet${{ inputs.dotnetVersion }}-
+          nuget-http-${{ runner.os }}-
+
+    - name: Remove docker-compose project
+      run: |
+        dotnet sln remove docker-compose.dcproj
+        rm -f docker-compose.dcproj
+      shell: bash
+
+    - name: Restore dependecies
+      shell: bash
+      run: |
+        # Use --locked-mode when packages.lock.json exists → skips FindPackagesById() metadata calls to Nexus.
+        # Callers opt-in by setting <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile> in Directory.Build.props
+        # and committing the generated packages.lock.json files.
+        if find . -type d -name .git -prune -o -type f -name packages.lock.json -print 2>/dev/null | grep -q .; then
+          echo "packages.lock.json detected — restoring in locked mode"
+          dotnet restore --locked-mode --verbosity minimal
+        else
+          dotnet restore --verbosity minimal
+        fi
+
+    - name: Build and Publish .NET Project
+      run: dotnet publish ${{ inputs.startupProject }} -c Release -o build --no-restore
+      shell: bash
+
+    - name: Upload Build Artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifactId }}
+        path: build
