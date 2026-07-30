@@ -1,0 +1,27 @@
+name: 'Publish NuGet Package'
+description: 'Packs a .NET project and publishes it to the Vicgital GitHub Packages NuGet feed'
+
+inputs:
+  startupProject:
+    description: 'Path to the .csproj file to pack'
+    required: true
+  dotnetVersion:
+    description: '.NET SDK version to use'
+    required: false
+    default: '10.0.x'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ inputs.dotnetVersion }}
+
+    - name: Pack
+      shell: bash
+      run: dotnet pack "${{ inputs.startupProject }}"  -c Release -o ./nupkg
+
+    - name: Push to GitHub Packages
+      shell: bash
+      run: dotnet nuget push "./nupkg/*.nupkg" --source "https://nuget.pkg.github.com/vicgital/index.json" --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
