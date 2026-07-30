@@ -23,6 +23,9 @@ jobs:
       - uses: Vicgital/cicd/actions/dotnetNugetPublish@main
         with:
           startupProject: src/Vicgital.Core.Logging/Vicgital.Core.Logging.csproj
+          githubPublishPackageToken: ${{ secrets.GITHUB_TOKEN }}
+          githubPackageUsername: ${{ secrets.GH_PACKAGE_USERNAME }}
+          githubPackageToken: ${{ secrets.GH_PACKAGE_TOKEN }}
 ```
 
 ## Inputs
@@ -30,18 +33,25 @@ jobs:
 | Name | Required | Default | Description |
 |---|---|---|---|
 | `startupProject` | yes | - | Path to the `.csproj` file to pack |
+| `githubPublishPackageToken` | yes | - | GitHub authentication token used to push the package, typically `secrets.GITHUB_TOKEN` |
+| `githubPackageUsername` | yes | - | GitHub auth username used to restore dependency packages |
+| `githubPackageToken` | yes | - | GitHub auth PAT used to restore dependency packages |
 | `dotnetVersion` | no | `10.0.x` | .NET SDK version to use |
 
 ## What it does
 
 1. Sets up the .NET SDK (`actions/setup-dotnet@v4`) using `dotnetVersion`.
-2. Runs `dotnet pack` on `startupProject` in `Release` configuration, output to `./nupkg`.
+2. Runs `dotnet pack` on `startupProject` in `Release` configuration, output to `./nupkg`, using
+   `githubPackageUsername`/`githubPackageToken` (as `GH_PACKAGE_USERNAME`/`GH_PACKAGE_TOKEN`) to
+   restore any dependencies from GitHub Packages.
 3. Pushes the resulting `.nupkg` to `https://nuget.pkg.github.com/vicgital/index.json` via
-   `dotnet nuget push`, skipping duplicates.
+   `dotnet nuget push`, authenticating with `githubPublishPackageToken` and skipping duplicates.
 
 ## Notes
 
-- The push step authenticates with `secrets.GITHUB_TOKEN`. The calling workflow's job needs
-  `permissions: packages: write` for this to succeed.
+- Secrets aren't implicitly available to composite actions, so the calling workflow must pass
+  them in explicitly as inputs (`githubPublishPackageToken`, `githubPackageUsername`,
+  `githubPackageToken`).
+- The calling workflow's job needs `permissions: packages: write` for the push step to succeed.
 - The NuGet feed URL is hardcoded to the Vicgital GitHub Packages org and isn't configurable
   as an input.
