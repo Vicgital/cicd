@@ -4,7 +4,7 @@ inputs:
   startupProject: 
     description: 'Project path that has the Dockerfile'
     required: true
-  githubPublishPackageToken:
+  githubPublishImageToken:
     description: 'Github authentication token used to push the docker image, tipically the {{ secrets.GITHUB_TOKEN }}'
     required: true
   artifactId:
