@@ -76,7 +76,7 @@ runs:
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
-        password: ${{ inputs.githubPublishPackageToken }}
+        password: ${{ inputs.githubPublishImageToken }}
 
     - name: Download Build Artifact
       uses: actions/download-artifact@v4
